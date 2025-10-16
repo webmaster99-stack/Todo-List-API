@@ -5,14 +5,17 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
 from .models import Todo
 from .serializers import TodoSerializer
+from .paginations import TodoListPaginator
 
 # Create your views here.
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def list_todos(request):
     todos = Todo.objects.filter(author=request.user, is_completed=False)
-    serializer = TodoSerializer(todos, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    paginator = TodoListPaginator()
+    paginated_todos = paginator.paginate_queryset(todos, request)
+    serializer = TodoSerializer(paginated_todos, many=True)
+    return paginator.get_paginated_response(serializer.data)
 
 
 @api_view(["POST"])
